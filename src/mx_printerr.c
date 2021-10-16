@@ -6,7 +6,7 @@ void mx_printerr(const char *s)
 	char i = s[0];
 	while (i != '\0')
 	{
-		j++;
+		j += 1;
 		i = s[j];
 	}
 	write(2, s, j);

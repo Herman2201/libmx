@@ -1,37 +1,41 @@
-SRC_DIR := src
-OBJ_DIR := obj
+NAME = libmx.a
 
-EXE := libmx.a
-SRC := $(wildcard $(SRC_DIR)/*.c)
-OBJ := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+SRC_DIR = src
+OBJ_DIR = obj
+INC_DIR = inc
 
-CC=clang
-CPPFLAGS=-Iinc -MMD -MP
-CFLAGS=-std=c11 -Wall -Wextra -Werror -Wpedantic
+SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
+OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(notdir $(SRC_FILES:%.c=%.o)))
+INC_FILES = $(wildcard $(INC_DIR)/*.h)
 
-all: $(EXE)
+CC = clang
+CFLAGS = -std=c11 $(addprefix -W, all extra error pedantic) -g
+AR = ar
+AFLAGS = rcs
 
-$(EXE): $(OBJ)
-	@$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-	@printf "\r\33[2K$@\t   \033[32;1mcreated\033[0m\n"
+MKDIR = mkdir -p
+RM = rm -rf
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+all: $(NAME) clean
 
-	@printf "\r\33[2K$(NAME)\t   \033[33;1mcompile \033[0m$(<:$(SRCD)/%.c=%) "
+$(NAME): $(OBJ_FILES)
+	@$(AR) $(AFLAGS) $@ $^
+
+$(OBJ_FILES): | $(OBJ_DIR)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(INC_FILES)
+	@$(CC) $(CFLAGS) -c $< -o $@ -I $(INC_DIR)
 
 $(OBJ_DIR):
-	@mkdir -p $@
-
-uninstall: clean
-	@$(RM) -v $(EXE)
-	@printf "$(EXE)\t   \033[31;1muninstalled\033[0m\n"
+	@$(MKDIR) $@
 
 clean:
-	@$(RM) -rv $(OBJ_DIR)
-	@printf "$(OBJ_DIR)\t   \033[31;1mdeleted\033[0m\n"
+	@$(RM) $(OBJ_DIR)
 
--include $(OBJ:.o=.d)
+uninstall:
+	@$(RM) $(OBJ_DIR)
+	@$(RM) $(NAME)
 
 reinstall: uninstall all
 
+.PHONY: all uninstall clean reinstall
